@@ -1,0 +1,9 @@
+.data
+	strD: .asciiz "haha"
+.text
+	.globl main
+main:
+	 li $v0, 4
+	 la $a0, 4
+	syscall
+

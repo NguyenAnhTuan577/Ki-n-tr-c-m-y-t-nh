@@ -1,0 +1,2469 @@
+.data
+InputDay: .asciiz "Nhap ngay DAY: "
+InputMonth: .asciiz "\nNhap thang MONTH:"
+InputYear: .asciiz "\nNhap nam YEAR:"
+Menu: .asciiz "----------Ban hay chon mot trong cac thao tac duoi day ------"
+Opt1: .asciiz "\n1. Xuat chuoi TIME theo dinh dang DD/MM/YYYY"
+Opt2: .asciiz "\n2. Chuyen doi chuoi TIME thanh mot trong cac dinh dang sau"
+WhiteSpace: .asciiz "\n           "
+A. : .asciiz "A. MM/DD/YYYY"
+B. : .asciiz "B. Month DD,YYYY"
+C. : .asciiz "C. DD Month,YYYY:
+Opt3 : .asciiz "\n3. Cho biet ngay vua nhap la ngay thu may trong tuan"
+Opt4 : .asciiz "\n4. Kiem tra nam trong chuoi TIME co phai nam nhuan hay khong"
+Opt5 : .asciiz "\n5. Cho biet khoang thoi gian giua chuoi TIME_1 va TIME_2"
+Opt6 : .asciiz "\n6. Cho biet hai nam nhuan gan nhat voi nam trong chuoi"
+LuaChon: .asciiz "\n. Lua chon: "
+KetQua: .asciiz "\n. Ket qua: "
+LuaChon2: .asciiz "\n    Nhap kieu dinh dang: "
+NhapTime2: .asciiz"\n    Nhap TIME_2: \n"
+Warning: .asciiz "\n *Du lieu nhap khong hop le, vui long nhap lai\n"
+
+DayString: .space 5
+MonthString: .space 3
+YearString: .space 5
+.align 4
+Day: .word 0
+Month: .word 0
+Year: .word 0
+WDay: .space 6
+
+Time: .space 11
+Time_2: .space 11
+#Slash: .asciiz "/"
+LineFeed: .asciiz "\n"
+
+
+.text
+
+main:
+
+la $a0,InputDay
+addi $v0,$0,4
+syscall
+
+la $a0,DayString
+addi $a1,$a1,3
+
+addi $v0,$0,8
+syscall
+
+
+la $a0,InputMonth
+addi $v0,$0,4
+syscall
+
+
+la $a0,MonthString
+addi $a1,$a1,3
+
+addi $v0,$0,8
+syscall
+
+
+la $a0,InputYear
+addi $v0,$0,4
+syscall
+
+
+la $a0,YearString
+addi $a1,$a1,5
+
+addi $v0,$0,8
+syscall
+
+Test:
+	la $a0,DayString
+	la $a1,MonthString
+	la $a2,YearString
+	jal IsValid
+	bne $v0,$0,Restore
+	la $a0,Warning
+	addi $v0,$0,4
+	syscall
+	j main
+
+Restore:
+
+jal Restore_To_Time
+
+la $a0,Menu
+addi $v0,$0,4
+syscall
+
+la $a0,Opt1
+addi $v0,$0,4
+syscall
+
+la $a0,Opt2
+addi $v0,$0,4
+syscall
+
+la $a0,WhiteSpace
+addi $v0,$0,4
+syscall
+
+la $a0,A.
+addi $v0,$0,4
+syscall
+
+la $a0,WhiteSpace
+addi $v0,$0,4
+syscall
+
+la $a0,B.
+addi $v0,$0,4
+syscall
+
+la $a0,WhiteSpace
+addi $v0,$0,4
+syscall
+
+la $a0,C.
+addi $v0,$0,4
+syscall
+
+la $a0,Opt3
+addi $v0,$0,4
+syscall
+
+la $a0,Opt4
+addi $v0,$0,4
+syscall
+
+la $a0,Opt5
+addi $v0,$0,4
+syscall
+
+la $a0,Opt6
+addi $v0,$0,4
+syscall
+
+la $a0,LuaChon
+addi $v0,$0,4
+syscall
+
+addi $v0,$0,5
+syscall 
+add $t0,$0,$v0
+
+addi $t1,$0,2
+bne $t0,$t1,Continue
+la $a0,LuaChon2
+addi $v0,$0,4
+syscall
+addi $v0,$0,12
+syscall
+add $a1,$0,$v0
+
+Continue:
+la $a0,KetQua
+addi $v0,$0,4
+syscall
+
+
+
+#######################
+add $a0,$0,$t0
+jal Result
+
+
+addi $v0,$0,10
+syscall
+	
+
+####################
+
+Restore_To_Time:
+
+	la $a0,DayString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Day
+	sw $v0,0($a0)
+
+	
+	la $a0,MonthString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Month
+	sw $v0,0($a0)
+	
+	
+	la $a0,YearString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Year
+	sw $v0,0($a0)
+
+	FinishStore:
+		jr $ra
+#############
+Strcat:
+	
+	addi $t8,$t8,10					#store /n to $t8
+
+	FindEndLoop:
+		lb $t0,0($a0)
+		beq $t0,$0,EndLoopExit
+		addi $a0,$a0,1
+		j FindEndLoop
+	EndLoopExit:
+		
+
+	Concatenate:
+    	lb      $t1,($a1)             # get the current char
+		beq     $t1,$0,strcat_done         # is char 0? if yes, done
+		beq     $t1,$t8,strcat_done 
+    	sb      $t1,0($a0)              # store the current char
+		
+
+    	addi    $a0,$a0,1               # advance destination pointer
+    	addi    $a1,$a1,1               # advance source pointer
+    	j       Concatenate
+
+strcat_done:
+    sb      $zero,0($a0)            # add EOS
+    jr      $ra                     # return
+############
+Strlen:
+	add $v0,$0,$0
+	LoopStrlen:
+	lb $t0,0($a0)
+	addi $t1,$0,10
+	beq $t0,$0,ReturnLength
+	beq $t0,$t1,ReturnLength
+	addi $v0,$v0,1
+	addi $a0,$a0,1
+	j LoopStrlen
+ReturnLength:
+	jr $ra
+################
+Strcopy:
+	lb $t0,0($a0)
+	beq $t0,$0,ExitStrcopy
+	sb $t0,0($a1)
+	addi $a0,$a0,1
+	addi $a1,$a1,1
+	j Strcopy
+ExitStrcopy:
+	sb $0,0($a1)
+	jr $ra
+###############
+Atoi:
+	add $v0,$0,$0	
+
+	ConvertLoop:
+		lb $t0,0($a0)
+		beq $t0,$0,ReturnInt
+		addi $t1,$0,10
+		beq $t0,$t1,ReturnInt
+		addi $t0,$t0,-48
+		addi $t1,$0,10
+		mult $v0,$t1
+		mflo $v0
+		add $v0,$v0,$t0
+		addi $a0,$a0,1
+		j ConvertLoop
+
+	ReturnInt:
+		jr $ra
+###############################
+Result:
+	
+	Option1:
+		addi $t0,$0,1
+		bne $a0,$t0,Option2
+		
+		addi $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Output_DD_MM_YYYY
+
+		la $a0,Time
+		addi $v0,$0,4
+		syscall
+
+		lw $ra,4($sp)
+		lw $a0,0($sp)
+		addi $sp,$sp,8
+
+		
+		j Exit_Result
+
+
+	Option2:
+		addi $t0,$0,2
+		bne $a0,$t0,Option3
+
+		
+		addi $sp,$sp,-12
+		sw $ra,0($sp)
+		sw $a0,4($sp)
+		sw $a1,8($sp)
+		la $a0,Time
+		add $a1,$a1,$0
+		jal Convert
+		lw $ra,0($sp)
+		lw $a0,4($sp)
+		lw $a1,8($sp)
+		addi $sp,$sp,12
+
+		la $a0,Time
+		addi $v0,$0,4
+		syscall
+
+		j Exit_Result
+
+	Option3:
+
+		addi $t0,$0,3
+		bne $a0,$t0,Option4
+
+		addi $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Output_DD_MM_YYYY
+		lw $a0,0($sp)
+		lw $ra,4($sp)
+		addi $sp,$sp,8
+
+
+		add $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		la $a0,Time
+		jal WeekDay
+		lw $ra,4($sp)
+		lw $a0,0($sp)
+		addi $sp,$sp,8
+		
+		
+		add $a0,$v0,$0
+		addi $v0,$0,4
+		syscall
+
+		j Exit_Result
+
+	Option4:
+
+		addi $t0,$0,4
+		bne $a0,$t0,Option5
+
+		addi $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Output_DD_MM_YYYY
+		lw $a0,0($sp)
+		lw $ra,4($sp)
+		addi $sp,$sp,8
+
+		addi $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		la $a0,Time
+		jal LeapYear
+		lw $a0,0($sp)
+		lw $ra,4($sp)
+		addi $sp,$sp,8
+
+		add $a0,$v0,0
+		add $v0,$0,1
+		syscall
+		
+		j Exit_Result 
+		
+	Option5:
+
+		addi $t0,$0,5
+		bne $a0,$t0,Option6
+		addi $sp,$sp,-8
+		sw $a0,0($sp)
+		sw $ra,4($sp)
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Output_DD_MM_YYYY
+		lw $ra,4($sp)
+		add $sp,$sp,4
+
+
+		la $a0,NhapTime2
+		addi $v0,$0,4
+		syscall
+
+		la $a0,InputDay
+		addi $v0,$0,4
+		syscall
+
+		la $a0,DayString
+		addi $a1,$a1,3
+
+		addi $v0,$0,8
+		syscall
+
+
+		la $a0,InputMonth
+		addi $v0,$0,4
+		syscall
+
+		la $a0,MonthString
+		addi $a1,$a1,3
+
+		addi $v0,$0,8
+		syscall
+
+
+		la $a0,InputYear
+		addi $v0,$0,4
+		syscall
+
+
+		la $a0,YearString
+		addi $a1,$a1,5
+
+		addi $v0,$0,8
+		syscall
+
+		addi $sp,$sp,-4
+		sw $ra,0($sp)
+
+		jal Store_to_Time_2
+
+		lw $ra,0($sp)
+		addi $sp,$sp,4
+
+
+
+
+		la $a0,Time
+		la $a1,Time_2
+		
+		addi $sp,$sp,-4
+		sw $ra,0($sp)
+		
+		jal GetTime
+
+		lw $ra,0($sp)
+		addi $sp,$sp,4
+		lw $a0,0($sp)
+		addi $sp,$sp,4
+
+		add $a0,$0,$v0
+		addi $v0,$0,1
+		syscall
+
+		j Exit_Result
+
+	Option6:
+
+	
+
+	Exit_Result:
+		jr $ra
+####################
+
+Store_to_Time_2:
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	la $a0,DayString
+	jal Strlen
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+
+	la $a0,DayString
+	addi $t0,$0,2
+	beq $v0,$t0,UpdateMonthString
+	lb $t0,0($a0)
+	addi $t1,$0,'0'
+	sb $t1,0($a0)
+	addi $a0,$a0,1
+	sb $t0,0($a0)
+	addi $a0,$a0,1
+	sb $0,0($a0)
+
+
+	UpdateMonthString:
+
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	la $a0,MonthString
+	jal Strlen
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+
+	la $a0,MonthString
+	addi $t0,$0,2
+	beq $v0,$t0,UpdateYearString
+	lb $t0,0($a0)
+	addi $t1,$0,'0'
+	sb $t1,0($a0)
+	addi $a0,$a0,1
+	sb $t0,0($a0)
+
+	UpdateYearString:
+
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	la $a0,YearString
+	jal Strlen
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+
+	la $a0,YearString
+	addi $t0,$0,4
+	beq $v0,$t0,FinishUpdate
+	addi $t0,$0,3
+	beq $v0,$t0,Add1Zero
+	addi $t0,$0,2
+	beq $v0,$t0,Add2Zero
+	addi $t0,$0,1
+	beq $v0,$t0,Add3Zero
+
+	Add1Zero:
+		lb $t0,0($a0)
+		lb $t1,1($a0)
+		lb $t2,2($a0)
+		addi $t3,$0,'0'
+		sb $t3,0($a0)
+		sb $t0,1($a0)
+		sb $t1,2($a0)
+		sb $t2,3($a0)
+		j FinishUpdate
+
+	
+	Add2Zero:
+		lb $t0,0($a0)
+		lb $t1,1($a0)
+		addi $t2,$0,'0'
+		sb $t2,0($a0)
+		sb $t2,1($a0)
+		sb $t0,2($a0)
+		sb $t1,3($a0)
+		j FinishUpdate
+
+
+	Add3Zero:
+		lb $t0,0($a0)
+		addi $t1,$0,'0'
+		sb $t1,0($a0)
+		sb $t1,1($a0)
+		sb $t1,2($a0)
+		sb $t0,3($a0)
+		j FinishUpdate
+
+
+	FinishUpdate:
+	
+	la $a0,Time_2
+	la $a1,DayString
+	addi $sp,$sp,-4
+	sw $ra, 0($sp)
+	jal Strcat
+	lw $ra, 0($sp)
+	addi $sp,$sp,4
+	
+	la $a0,Time_2
+	addi $a0,$a0,2
+	addi $t0,$0,'/'
+	sb $t0,0($a0)
+
+
+	la $a0,Time_2
+	la $a1,MonthString
+	addi $sp,$sp,-4
+	sw $ra, 0($sp)
+	jal Strcat
+	lw $ra, 0($sp)
+	addi $sp,$sp,4
+	
+	la $a0,Time_2
+	addi $a0,$a0,5
+	addi $t0,$0,'/'
+	sb $t0,0($a0)
+
+	
+	la $a0,Time_2
+	la $a1,YearString
+	addi $sp,$sp,-4
+	sw $ra, 0($sp)
+	jal Strcat
+	lw $ra, 0($sp)
+	addi $sp,$sp,4
+	
+
+	la $a0,DayString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Day
+	sw $v0,0($a0)
+
+	
+	la $a0,MonthString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Month
+	sw $v0,0($a0)
+	
+	
+	la $a0,YearString
+	addi $sp,$sp,-4
+	sw $ra,0($sp)
+	jal Atoi
+	lw $ra,0($sp)
+	addi $sp,$sp,4
+	la $a0,Year
+	sw $v0,0($a0)
+
+	FinishStore_Time2:
+		jr $ra
+
+
+######################
+#char* Date(int day, int month, int year, char* TIME)
+
+Output_DD_MM_YYYY:
+	AddDayToTime:
+		add $t0,$0,$a0
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,AddDay
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,'/'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j AddMonthToTime
+		
+		AddDay:
+		add $t0,$0,$a0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,'/'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+	AddMonthToTime:
+		add $t0,$0,$a1
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,AddMonth
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a1,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,'/'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j AddYearToTime
+		
+		AddMonth:
+		add $t0,$0,$a1
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,'/'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+	
+	AddYearToTime:
+		add $t0,$a2,$0
+		addi $t1,$0,1000
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,100
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1		
+		sb $t3,0($a3)
+
+	add $v0,$a3,$0
+	jr $ra
+###############
+#char* Convert(char* TIME, char type)
+Convert:
+	Case_A:
+		addi $t0,$0,'A'
+		bne $a1,$t0,Case_B
+		addi $sp,$sp,-12
+		sw $ra,0($sp)
+		sw $a0,4($sp)
+		sw $a1,8($sp)
+
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Ouput_MM_DD_YYYY
+		
+		lw $ra,0($sp)
+		lw $a0,4($sp)
+		lw $a1,8($sp)
+		addi $sp,$sp,12
+
+		j Exit_Convert
+
+	Case_B:
+		addi $t0,$0,'B'
+		bne $a1,$t0,Case_C
+		addi $sp,$sp,-12
+		sw $ra,0($sp)
+		sw $a0,4($sp)
+		sw $a1,8($sp)
+
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Ouput_Month_DD_YYYY
+		
+		lw $ra,0($sp)
+		lw $a0,4($sp)
+		lw $a1,8($sp)
+		addi $sp,$sp,12
+
+		j Exit_Convert
+
+	Case_C:
+		addi $t0,$0,'C'
+		bne $a1,$t0,Exit_Convert
+		addi $sp,$sp,-12
+		sw $ra,0($sp)
+		sw $a0,4($sp)
+		sw $a1,8($sp)
+
+		lw $a0,Day
+		lw $a1,Month
+		lw $a2,Year
+		la $a3,Time
+		jal Ouput_DD_Month_YYYY
+		
+		lw $ra,0($sp)
+		lw $a0,4($sp)
+		lw $a1,8($sp)
+		addi $sp,$sp,12
+	
+	Exit_Convert:
+		jr $ra
+#########
+Ouput_MM_DD_YYYY:
+
+	A_Step_1:
+		add $t0,$0,$a1
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,A_Step_12
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a1,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,'/'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j A_Step_2
+		
+		A_Step_12:
+		add $t0,$0,$a1
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,'/'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+	
+	A_Step_2:
+		add $t0,$0,$a0
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,A_Step_22
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,'/'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j A_Step_3
+		
+		A_Step_22:
+		add $t0,$0,$a0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,'/'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+
+	A_Step_3:
+		add $t0,$a2,$0
+		addi $t1,$0,1000
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,100
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1		
+		sb $t3,0($a3)
+	jr $ra
+###############
+Ouput_Month_DD_YYYY:
+
+	B_Step_1:
+		B_January:
+		addi $t0,$0,1
+		bne $a1,$t0,B_February
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'n'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+		
+		B_February:
+		addi $t0,$0,2
+		bne $a1,$t0,B_March
+		addi $t1,$0,'F'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_March:
+		addi $t0,$0,3
+		bne $a1,$t0,B_April
+		addi $t1,$0,'M'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'h'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_April:
+		addi $t0,$0,4
+		bne $a1,$t0,B_May
+		addi $t1,$0,'A'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'p'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'i'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'l'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_May:
+		addi $t0,$0,5
+		bne $a1,$t0,B_June
+		addi $t1,$0,'M'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_June:
+		addi $t0,$0,6
+		bne $a1,$t0,B_July
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'n'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_July:
+		addi $t0,$0,7
+		bne $a1,$t0,B_August
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'l'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_August:
+		addi $t0,$0,8
+		bne $a1,$t0,B_September
+		addi $t1,$0,'A'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'g'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'s'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_September:
+		addi $t0,$0,9
+		bne $a1,$t0,B_October
+		addi $t1,$0,'S'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'p'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_October:
+		addi $t0,$0,10
+		bne $a1,$t0,B_November
+		addi $t1,$0,'O'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'o'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+
+
+		B_November:
+		addi $t0,$0,11
+		bne $a1,$t0,B_December
+		addi $t1,$0,'N'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'o'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'v'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j B_Step_2
+
+		B_December:
+		addi $t1,$0,'D'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+
+	B_Step_2:
+		add $t0,$0,$a0
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,B_Step_22
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,','
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,' '
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j B_Step_3
+		
+		B_Step_22:
+		add $t0,$0,$a0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,','
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,' '
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+
+	B_Step_3:
+		add $t0,$a2,$0
+		addi $t1,$0,1000
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,100
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1		
+		sb $t3,0($a3)
+	jr $ra
+###########################
+Ouput_DD_Month_YYYY:
+
+	C_Step_1:
+		add $t0,$0,$a0
+		addi $t1,$0,9
+		slt $t2,$t1,$t0
+		bne $t2,$0,C_Step_12
+		addi $t3,$0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$a0,'0'
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t3,$0,' '
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		j C_Step_2
+				
+		C_Step_12:
+		add $t0,$0,$a0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2, 0($a3)
+		addi $a3,$a3,1
+		sb $t3,0($a3)
+		addi $a3,$a3,1
+		addi $t2,$0,' '
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+
+
+
+	C_Step_2:
+		C_January:
+		addi $t0,$0,1
+		bne $a1,$t0,C_February
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'n'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+		
+		C_February:
+		addi $t0,$0,2
+		bne $a1,$t0,C_March
+		addi $t1,$0,'F'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_March:
+		addi $t0,$0,3
+		bne $a1,$t0,C_April
+		addi $t1,$0,'M'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'h'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_April:
+		addi $t0,$0,4
+		bne $a1,$t0,C_May
+		addi $t1,$0,'A'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'p'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'i'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'l'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_May:
+		addi $t0,$0,5
+		bne $a1,$t0,C_June
+		addi $t1,$0,'M'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'a'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_June:
+		addi $t0,$0,6
+		bne $a1,$t0,C_July
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'n'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_July:
+		addi $t0,$0,7
+		bne $a1,$t0,C_August
+		addi $t1,$0,'J'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'l'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'y'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_August:
+		addi $t0,$0,8
+		bne $a1,$t0,C_September
+		addi $t1,$0,'A'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'g'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'u'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'s'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_September:
+		addi $t0,$0,9
+		bne $a1,$t0,C_October
+		addi $t1,$0,'S'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'p'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_October:
+		addi $t0,$0,10
+		bne $a1,$t0,C_November
+		addi $t1,$0,'O'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'t'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'o'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+
+
+		C_November:
+		addi $t0,$0,11
+		bne $a1,$t0,C_December
+		addi $t1,$0,'N'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'o'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'v'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		j C_Step_3
+
+		C_December:
+		addi $t1,$0,'D'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'c'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'m'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'b'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'e'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,'r'
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,','
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+		addi $t1,$0,' '
+		sb $t1,0($a3)
+		addi $a3,$a3,1
+
+
+	C_Step_3:
+		add $t0,$a2,$0
+		addi $t1,$0,1000
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,100
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1
+
+		add $t0,$t3,$0
+		addi $t1,$0,10
+		div $t0,$t1
+		mflo $t2
+		mfhi $t3
+		addi $t2,$t2,'0'
+		addi $t3,$t3,'0'
+		sb $t2,0($a3)
+		addi $a3,$a3,1		
+		sb $t3,0($a3)
+	jr $ra
+#############
+#int GetTime(char* TIME_1, char* TIME_2)
+
+GetTime:
+	addi $sp,$sp,-12
+	sw $a0,0($sp)
+	sw $a1,4($sp)
+	sw $ra,8($sp)
+	add $a0,$a0,$0
+	jal GetYear
+	add $t0,$v0,$0
+	lw $a0,0($sp)
+	lw $a1,4($sp)
+	lw $ra,8($sp)
+	addi $sp,$sp,12
+
+	addi $sp,$sp,-16
+	sw $a0,0($sp)
+	sw $a1,4($sp)
+	sw $ra,8($sp)
+	sw $t0,12($sp)
+	add $a0,$a1,$0
+	jal GetYear
+	add $t1,$v0,$0
+	lw $a0,0($sp)
+	lw $a1,4($sp)
+	lw $ra,8($sp)
+	lw $t0,12($sp)
+	addi $sp,$sp,16
+
+	slt $t2,$t0,$t1
+	bne $t2,$0,Time2_Sub_Time1
+	sub $t3,$t0,$t1
+	beq $t3,$0,Return_0
+	add $v0,$t3,$0
+	j Check_Month_Case1
+
+	Return_0:
+		add $v0,$0,$0
+		j Exit_GetTime
+
+	Check_Month_Case1:
+		addi $sp,$sp,-16
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $v0,12($sp)
+		add $a0,$a0,$0
+		jal GetMonth
+		add $t0,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $v0,12($sp)
+		addi $sp,$sp,16
+
+		addi $sp,$sp,-20
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $t0,12($sp)
+		sw $v0,16($sp)
+		add $a0,$a1,$0
+		jal GetMonth
+		add $t1,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $t0,12($sp)
+		lw $v0,16($sp)
+		addi $sp,$sp,20
+		
+		beq $t0,$t1,CheckDay_Case1
+		slt $t2,$t1,$t0
+		bne $t2,$0,Exit_GetTime
+		addi $v0,$v0,-1
+		j Exit_GetTime
+			
+	CheckDay_Case1:
+		addi $sp,$sp,-16
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $v0,12($sp)
+		add $a0,$a0,$0
+		jal GetDay
+		add $t0,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $v0,12($sp)
+		addi $sp,$sp,16
+
+		addi $sp,$sp,-20
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $t0,12($sp)
+		sw $v0,16($sp)
+		add $a0,$a1,$0
+		jal GetDay
+		add $t1,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $t0,12($sp)
+		lw $v0,16($sp)
+		addi $sp,$sp,20
+		
+		slt $t2,$t0,$t1
+		beq $t2,$0,Exit_GetTime
+		addi $v0,$v0,-1
+		j Exit_GetTime
+
+	Time2_Sub_Time1:
+		sub $t2,$t1,$t0
+		add $v0,$0,$t2
+
+	CheckMonth_Case2:
+		addi $sp,$sp,-16
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $v0,12($sp)
+		add $a0,$a0,$0
+		jal GetMonth
+		add $t0,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $v0,12($sp)
+		addi $sp,$sp,16
+
+		addi $sp,$sp,-20
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $t0,12($sp)
+		sw $v0,16($sp)
+		add $a0,$a1,$0
+		jal GetMonth
+		add $t1,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $t0,12($sp)
+		lw $v0,16($sp)
+		addi $sp,$sp,20
+		
+		beq $t0,$t1,CheckDay_Case2
+		slt $t2,$t0,$t1
+		bne $t2,$0,Exit_GetTime
+		addi $v0,$v0,-1
+		j Exit_GetTime
+
+	CheckDay_Case2:
+		addi $sp,$sp,-16
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $v0,12($sp)
+		add $a0,$a0,$0
+		jal GetDay
+		add $t0,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $v0,12($sp)
+		addi $sp,$sp,16
+
+		addi $sp,$sp,-20
+		sw $a0,0($sp)
+		sw $a1,4($sp)
+		sw $ra,8($sp)
+		sw $t0,12($sp)
+		sw $v0,16($sp)
+		add $a0,$a1,$0
+		jal GetDay
+		add $t1,$v0,$0
+		lw $a0,0($sp)
+		lw $a1,4($sp)
+		lw $ra,8($sp)
+		lw $t0,12($sp)
+		lw $v0,16($sp)
+		addi $sp,$sp,20
+		
+		slt $t2,$t1,$t0
+		beq $t2,$0,Exit_GetTime
+		addi $v0,$v0,-1
+		j Exit_GetTime
+
+	Exit_GetTime:
+		jr $ra
+#############
+#int Year(char* TIME)
+
+GetYear:
+	add $v0,$0,$0
+	addi $a0,$a0,6
+	add $t0,$0,$a0
+	addi $sp,$sp,-12
+	sw $ra,0($sp)
+	sw $v0,4($sp)
+	sw $a0,8($sp)
+	add $a0,$t0,$0
+	jal Atoi
+	add $t1,$v0,$0
+	lw $ra,0($sp)
+	lw $v0,4($sp)
+	lw $a0,8($sp)
+	addi $sp,$sp,12
+	add $v0,$t1,$0
+	
+	jr $ra
+#########################
+#int Month(char* TIME)
+
+GetMonth:
+	add $v0,$0,$0
+	addi $a0,$a0,3
+	lb $t0,0($a0)
+	addi $t0,$t0,-48
+	addi $t1,$0,10
+	mult $t0,$t1
+	mflo $t2
+	add $v0,$v0,$t2
+	addi $a0,$a0,1
+	lb $t0,0($a0)
+	addi $t0,$t0,-48
+	add $v0,$v0,$t0
+	
+	jr $ra
+#########################
+#int Day(char* TIME)
+
+GetDay:
+
+	add $v0,$0,$0
+	lb $t0,0($a0)
+	addi $t0,$t0,-48
+	addi $t1,$0,10
+	mult $t0,$t1
+	mflo $t2
+	add $v0,$v0,$t2
+	addi $a0,$a0,1
+	lb $t0,0($a0)
+	addi $t0,$t0,-48
+	add $v0,$v0,$t0
+
+	jr $ra
+#########################
+#char* Weekday(char* TIME)
+#Wd=d+m+y+[y/4]+c mod 7
+	
+WeekDay:
+
+	Get_d:	
+
+	addi $sp,$sp,-8
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	add $a0,$a0,$0
+	jal GetDay
+	add $t0,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	addi $sp,$sp,8
+
+	addi $sp,$sp,-12
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	sw $t0,8($sp)
+	add $a0,$a0,$0
+	jal GetMonth
+	add $t1,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	lw $t0,8($sp)
+	addi $sp,$sp,12
+
+	Get_m:
+
+	addi $sp,$sp,-16
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	sw $t0,8($sp)
+	sw $t1,12($sp)
+	add $a0,$a0,$0
+	jal LeapYear
+	add $t2,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	lw $t0,8($sp)
+	lw $t1,12($sp)
+	addi $sp,$sp,16	
+	
+
+	January_Case:
+	addi $t3, $0,1
+	bne $t1,$t3,February_Case
+	add $t1,$0,$0
+	beq $t2,$0,Get_y
+	addi $t1,$0,6
+	j Get_y
+
+	February_Case:
+	addi $t3, $0,2
+	bne $t1,$t3,March_Case
+	addi $t1,$0,3
+	beq $t2,$0,Get_y
+	addi $t1,$0,2
+	j Get_y	
+	
+	March_Case:
+	addi $t3,$0,3
+	bne $t1,$t3,April_Case
+	addi $t1,$0,3
+	j Get_y
+
+	April_Case:
+	addi $t3,$0,4
+	bne $t1,$t3,May_Case
+	addi $t1,$0,6
+	j Get_y
+
+	May_Case:
+	addi $t3,$0,5
+	bne $t1,$t3,June_Case
+	addi $t1,$0,1
+	j Get_y
+
+	June_Case:
+	addi $t3,$0,6
+	bne $t1,$t3,July_Case
+	addi $t1,$0,4
+	j Get_y
+
+	July_Case:
+	addi $t3,$0,7
+	bne $t1,$t3,August_Case
+	addi $t1,$0,6
+	j Get_y
+
+	August_Case:
+	addi $t3,$0,8
+	bne $t1,$t3,September_Case
+	addi $t1,$0,2
+	j Get_y
+
+	September_Case:
+	addi $t3,$0,9
+	bne $t1,$t3,October_Case
+	addi $t1,$0,5
+	j Get_y
+
+	October_Case:
+	addi $t3,$0,10
+	bne $t1,$t3,November_Case
+	addi $t1,$0,0
+	j Get_y
+
+	November_Case:
+	addi $t3,$0,11
+	bne $t1,$t3,December_Case
+	addi $t1,$0,3
+	j Get_y
+
+	December_Case:
+	addi $t3,$0,12
+	bne $t1,$t3,Get_y
+	addi $t1,$0,5
+	j Get_y	
+
+
+	Get_y:
+	addi $sp,$sp,-16
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	sw $t0,8($sp)
+	sw $t1,12($sp)
+	add $a0,$a0,$0
+	jal GetYear
+	add $t2,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	lw $t0,8($sp)
+	lw $t1,12($sp)
+	addi $sp,$sp,16	
+	
+	addi $t3,$0,100
+	div $t2,$t3
+	mfhi $t2
+	addi $t2,$t2,1
+
+	addi $t3,$0,4
+	div $t2,$t3
+	mflo $t3
+
+	add $t4,$v0,$0
+	addi $t5,$0,100
+	div $t4,$t5
+	mflo $t4
+	
+	add $t5,$0,$t0
+	add $t5,$t5,$t1
+	add $t5,$t5,$t2
+	add $t5,$t5,$t3
+	add $t5,$t5,$t4
+
+	addi $t0,$0,7
+	div $t5,$t0
+	mfhi $t0
+
+
+	la $a0,WDay
+
+	Sun_Case:
+	addi $t1,$0,1
+	bne $t0,$t1,Mon_Case
+	addi $t2,$0,'S'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'u'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'n'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Mon_Case:
+	addi $t1,$0,2
+	bne $t0,$t1,Tues_Case
+	addi $t2,$0,'M'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'o'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'n'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Tues_Case:
+	addi $t1,$0,3
+	bne $t0,$t1,Wed_Case
+	addi $t2,$0,'T'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'u'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'e'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'s'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Wed_Case:
+	addi $t1,$0,4
+	bne $t0,$t1,Thurs_Case
+	addi $t2,$0,'W'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'e'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'d'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Thurs_Case:
+	addi $t1,$0,5
+	bne $t0,$t1,Fri_Case
+	addi $t2,$0,'T'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'h'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'u'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'r'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'s'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Fri_Case:
+	addi $t1,$0,6
+	bne $t0,$t1,Sat_Case
+	addi $t2,$0,'F'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'r'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'i'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Sat_Case:
+	add $t1,$0,$0
+	bne $t0,$t1,Exit_WeekDay
+	addi $t2,$0,'S'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'a'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	addi $t2,$0,'t'
+	sb $t2,0($a0)
+	addi $a0,$a0,1
+	j Exit_WeekDay
+
+	Exit_WeekDay:
+		la $a0,WDay
+		add $v0,$a0,$0
+		jr $ra
+
+################
+#int LeapYear(char* TIME)
+
+LeapYear:
+	addi $sp, $sp,-8
+	sw $ra, 0($sp)
+	sw $a0,4($sp)
+	add $a0,$a0,$0
+	jal GetYear
+	lw $ra,0($sp)
+	lw $a0,4($sp)
+	addi $sp,$sp,8
+	add $a0,$v0,$0
+ 
+
+
+	andi    $v0,$a0,3               
+	sltiu   $v0,$v0,1             
+
+	rem     $t0,$a0,100            
+	slt     $t0,$zero,$t0           
+
+	rem     $t1,$a0,400             
+	sltiu   $t1,$t1,1               
+
+	and     $v0,$v0,$t0             
+	or      $v0,$v0,$t1             
+
+	jr $ra
+##############
+IsValid:
+	addi $v0,$0,1
+
+	lb $t0,0($a0)
+	add $t1,$0,'-'
+	beq $t0,$t1,Invalid
+	lb $t0,0($a1)
+	add $t1,$0,'-'
+	beq $t0,$t1,Invalid	
+	lb $t0,0($a2)
+	add $t1,$0,'-'
+	beq $t0,$t1,Invalid
+	
+	addi $sp,$sp,-8
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	add $a0,$a0,$0
+	jal Atoi
+	add $s0,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	addi $sp,$sp,8
+
+	addi $sp,$sp,-8
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	add $a0,$a1,$0
+	jal Atoi
+	add $s1,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	addi $sp,$sp,8	
+
+	addi $sp,$sp,-8
+	sw $a0,0($sp)
+	sw $ra,4($sp)
+	add $a0,$a2,$0
+	jal Atoi
+	add $s2,$v0,$0
+	lw $a0,0($sp)
+	lw $ra,4($sp)
+	addi $sp,$sp,8		
+	
+	addi $t0,$0,31
+	slt $t1,$t0,$s0
+	bne $t1,$0,Invalid	
+
+	addi $t0,$0,12
+	slt $t1,$t0,$s1
+	bne $t1,$0,Invalid
+
+
+	lb $t0,0($a0)
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	lb $t0,1($a0)
+	beq $t0,$0,test_month
+	addi $t3,$0,10
+	beq $t0,$t3,test_month
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+
+	test_month:
+	lb $t0,0($a1)
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	lb $t0,1($a1)
+	beq $t0,$0,test_year
+	addi $t3,$0,10
+	beq $t0,$t3,test_year
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	
+	test_year:
+	lb $t0,0($a2)
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	lb $t0,1($a2)
+	beq $t0,$0,n3_char_of_year
+	addi $t3,$0,10
+	beq $t0,$t3,n3_char_of_year
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	n3_char_of_year:
+	lb $t0,2($a2)
+	beq $t0,$0,n4_char_of_year
+	addi $t3,$0,10
+	beq $t0,$t3,n4_char_of_year
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+	n4_char_of_year:
+	lb $t0,3($a2)
+	beq $t0,$0,test_leap_year
+	addi $t3,$0,10
+	beq $t0,$t3,test_leap_year
+	addi $t0,$t0,-48
+	slt $t1,$t0,$0
+	bne $t1,$0,Invalid
+	addi $t2,$0,9
+	slt $t1,$t2,$t0
+	bne $t1,$0,Invalid
+
+	test_leap_year:
+	addi $t0,$0,4
+	bne $s1,$t0,case_june
+	addi $t1,$0,30
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid
+	case_june:
+	addi $t0,$0,6
+	bne $s1,$t0,case_sep
+	addi $t1,$0,30
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid
+	case_sep:
+	addi $t0,$0,9
+	bne $s1,$t0,case_nov
+	addi $t1,$0,30
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid
+	case_nov:
+	addi $t0,$0,11
+	bne $s1,$t0,case_feb
+	addi $t1,$0,30
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid
+	case_feb:
+	addi $t0,$0,2
+	bne $s1,$t0,case_feb_leap
+	addi $t1,$0,29
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid
+	case_feb_leap:
+
+	andi    $t0,$s2,3               
+	sltiu   $t0,$t0,1             
+
+	rem     $t1,$s2,100            
+	slt     $t1,$zero,$t1           
+
+	rem     $t2,$s2,400             
+	sltiu   $t2,$t2,1               
+
+	and     $t0,$t0,$t1             
+	or      $t0,$t0,$t2             
+	
+	bne $t0,$0,Valid
+	addi $t1,$0,28
+	slt $t2,$t1,$s0
+	bne $t2,$0,Invalid	
+	
+	j Valid
+	Invalid:
+		add $v0,$0,$0
+		jr $ra
+	Valid:
+		jr $ra

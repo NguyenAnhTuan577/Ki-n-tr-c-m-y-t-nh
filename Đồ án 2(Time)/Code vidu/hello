@@ -1,0 +1,10 @@
+.data
+dhtl: .ascii "Dai hoc"
+		.asciiz " Thang Long\n"
+.text 
+main:
+la $a0, dhtl 
+li $v0, 4 
+syscall
+li $v0, 10
+syscall
